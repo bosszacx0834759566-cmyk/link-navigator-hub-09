@@ -226,3 +226,23 @@ export function graticuleGeometry(radius = 1.003, step = 15): THREE.BufferGeomet
   g.computeBoundingSphere();
   return g;
 }
+
+/** Equator, prime meridian and quarter meridians — drawn a touch brighter. */
+export function graticuleMajorGeometry(radius = 1.0095): THREE.BufferGeometry {
+  const pos: number[] = [];
+  const push = (a: THREE.Vector3, b: THREE.Vector3) => {
+    pos.push(a.x, a.y, a.z, b.x, b.y, b.z);
+  };
+  for (let lon = -180; lon < 180; lon += 2) {
+    push(llToVec(lon, 0, radius), llToVec(lon + 2, 0, radius));
+  }
+  for (const lon of [-90, 0, 90, 180]) {
+    for (let lat = -88; lat < 88; lat += 2) {
+      push(llToVec(lon, lat, radius), llToVec(lon, lat + 2, radius));
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeBoundingSphere();
+  return g;
+}

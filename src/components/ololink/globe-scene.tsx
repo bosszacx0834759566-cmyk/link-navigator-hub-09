@@ -14,7 +14,13 @@ import {
 } from 'react';
 import * as THREE from 'three';
 
-import { coastlineGeometry, graticuleGeometry, landGeometry } from '@/lib/vector-globe';
+import { EARTH_STYLE } from '@/lib/globe-style';
+import {
+  coastlineGeometry,
+  graticuleGeometry,
+  graticuleMajorGeometry,
+  landGeometry,
+} from '@/lib/vector-globe';
 
 import {
   ASSET_BY_ID,
@@ -215,10 +221,98 @@ function curveForSegment(segment: Segment) {
 /** Direction of the sun — chosen so the terminator crosses both regions. */
 export const SUN_DIR = new THREE.Vector3(...geoToVec(14, 178, 0)).normalize();
 
+/* Tiny hand-written shaders keep the look rich while every draw stays a single
+ * untextured pass — no imagery, no lighting maps, no post-processing. */
+
+const VERT = `
+  varying vec3 vN;
+  varying vec3 vUnit;
+  varying vec3 vView;
+  void main() {
+    vN = normalize(normalMatrix * normal);
+    vUnit = normalize(position);
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    vView = normalize(-mv.xyz);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+function oceanMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      cDeep: { value: new THREE.Color(EARTH_STYLE.oceanDeep) },
+      cMid: { value: new THREE.Color(EARTH_STYLE.oceanMid) },
+      cShallow: { value: new THREE.Color(EARTH_STYLE.oceanShallow) },
+      cRim: { value: new THREE.Color(EARTH_STYLE.atmosphere) },
+    },
+    vertexShader: VERT,
+    fragmentShader: `
+      uniform vec3 cDeep, cMid, cShallow, cRim;
+      varying vec3 vN; varying vec3 vUnit; varying vec3 vView;
+      void main() {
+        float lat = abs(vUnit.y);
+        vec3 col = mix(cShallow, cMid, smoothstep(0.0, 0.6, lat));
+        col = mix(col, cDeep, smoothstep(0.55, 1.0, lat));
+        float fres = pow(1.0 - max(dot(vN, vView), 0.0), 3.0);
+        col += cRim * fres * 0.30;
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+  });
+}
+
+function landMaterial() {
+  return new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
+    uniforms: {
+      cLow: { value: new THREE.Color(EARTH_STYLE.landLow) },
+      cHigh: { value: new THREE.Color(EARTH_STYLE.landHigh) },
+      cRim: { value: new THREE.Color(EARTH_STYLE.coast) },
+    },
+    vertexShader: VERT,
+    fragmentShader: `
+      uniform vec3 cLow, cHigh, cRim;
+      varying vec3 vN; varying vec3 vUnit; varying vec3 vView;
+      void main() {
+        float lat = abs(vUnit.y);
+        vec3 col = mix(cHigh, cLow, smoothstep(0.1, 0.85, lat));
+        float fres = pow(1.0 - max(dot(vN, vView), 0.0), 2.5);
+        col += cRim * fres * 0.16;
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+  });
+}
+
+/** Fresnel rim glow — one additive back-side shell, no post-processing. */
+function haloMaterial(strength: number, power: number) {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending,
+    uniforms: {
+      cGlow: { value: new THREE.Color(EARTH_STYLE.atmosphere) },
+      strength: { value: strength },
+      power: { value: power },
+    },
+    vertexShader: VERT,
+    fragmentShader: `
+      uniform vec3 cGlow; uniform float strength; uniform float power;
+      varying vec3 vN; varying vec3 vUnit; varying vec3 vView;
+      void main() {
+        float f = pow(1.0 - abs(dot(normalize(vN), normalize(vView))), power);
+        gl_FragColor = vec4(cGlow, f * strength);
+      }
+    `,
+  });
+}
+
 /**
- * Fully procedural / vector Earth — ocean shell, generated continent fills,
- * coastline strokes and a lat/lon graticule. No imagery, no textures, so the
- * scene paints immediately and stays smooth on low-end GPUs.
+ * Fully procedural / vector Earth — shaded ocean shell, generated continent
+ * fills, coastline strokes, a lat/lon graticule and a thin fresnel atmosphere.
+ * No imagery, no textures, so the scene paints immediately and stays smooth on
+ * low-end GPUs.
  */
 function Earth() {
   // radii are spaced generously: a faceted ocean sphere bulges above a thin
@@ -226,52 +320,74 @@ function Earth() {
   const land = useMemo(() => landGeometry(1.004), []);
   const coast = useMemo(() => coastlineGeometry(1.007), []);
   const grid = useMemo(() => graticuleGeometry(1.009, 15), []);
+  const gridMajor = useMemo(() => graticuleMajorGeometry(1.0095), []);
+
+  const oceanMat = useMemo(oceanMaterial, []);
+  const landMat = useMemo(landMaterial, []);
+  const innerHalo = useMemo(() => haloMaterial(0.18, 3.2), []);
+  const outerHalo = useMemo(() => haloMaterial(0.1, 2.4), []);
 
   useEffect(
     () => () => {
       land.dispose();
       coast.dispose();
       grid.dispose();
+      gridMajor.dispose();
+      oceanMat.dispose();
+      landMat.dispose();
+      innerHalo.dispose();
+      outerHalo.dispose();
     },
-    [land, coast, grid]
+    [land, coast, grid, gridMajor, oceanMat, landMat, innerHalo, outerHalo]
   );
 
   return (
     <group>
       {/* ocean shell */}
-      <mesh>
+      <mesh material={oceanMat}>
         <sphereGeometry args={[1, 96, 96]} />
-        <meshBasicMaterial color="#0a2038" toneMapped={false} />
       </mesh>
 
       {/* continents */}
-      <mesh geometry={land}>
-        <meshBasicMaterial color="#1f4d3d" toneMapped={false} side={THREE.DoubleSide} />
-      </mesh>
+      <mesh geometry={land} material={landMat} />
 
       {/* graticule */}
       <lineSegments geometry={grid}>
-        <lineBasicMaterial color="#4a86c8" transparent opacity={0.12} depthWrite={false} />
+        <lineBasicMaterial
+          color={EARTH_STYLE.graticule}
+          transparent
+          opacity={0.1}
+          depthWrite={false}
+        />
+      </lineSegments>
+      <lineSegments geometry={gridMajor}>
+        <lineBasicMaterial
+          color={EARTH_STYLE.graticuleMajor}
+          transparent
+          opacity={0.2}
+          depthWrite={false}
+        />
       </lineSegments>
 
       {/* coastlines */}
       <lineSegments geometry={coast}>
-        <lineBasicMaterial color="#7dd3fc" transparent opacity={0.55} depthWrite={false} />
+        <lineBasicMaterial
+          color={EARTH_STYLE.coast}
+          transparent
+          opacity={0.6}
+          depthWrite={false}
+        />
       </lineSegments>
 
-      {/* inner atmosphere */}
-      <mesh>
-        <sphereGeometry args={[1.016, 64, 64]} />
-        <meshBasicMaterial color="#4a86c8" transparent opacity={0.07} side={THREE.BackSide} />
+      {/* thin atmosphere + soft outer halo */}
+      <mesh material={innerHalo}>
+        <sphereGeometry args={[1.02, 48, 48]} />
       </mesh>
-      {/* outer halo */}
-      <mesh>
-        <sphereGeometry args={[1.08, 64, 64]} />
-        <meshBasicMaterial color="#1d4e8f" transparent opacity={0.06} side={THREE.BackSide} />
+      <mesh material={outerHalo}>
+        <sphereGeometry args={[1.11, 48, 48]} />
       </mesh>
     </group>
   );
-
 }
 
 
@@ -1814,6 +1930,9 @@ function SceneContent({
       {/* uniform ambient lighting only — no day/night terminator, no shadows */}
       <ambientLight intensity={3.2} />
 
+      {/* a sparse, static starfield — cheap depth cue, no textures */}
+      <Stars radius={60} depth={30} count={700} factor={2.4} saturation={0} fade speed={0} />
+
       
 
       <LodDriver onChange={setLod} />
@@ -1900,7 +2019,7 @@ export function GlobeScene({ state }: { state: OloLinkState }) {
         onPointerMissed={() => state.select(null)}
         className="!absolute inset-0"
       >
-        <color attach="background" args={['#000000']} />
+        <color attach="background" args={[EARTH_STYLE.space]} />
         <LodContext.Provider value={lod}>
           <SceneContent
             state={state}

@@ -54,3 +54,15 @@ export function graticulePath2D(step = 15): string {
 }
 
 export const GRATICULE_PATH_2D = graticulePath2D(15);
+
+/** Equator and quarter meridians — the 2D twin of graticuleMajorGeometry(). */
+export const GRATICULE_MAJOR_PATH_2D: string = (() => {
+  const d: string[] = [];
+  const eq = project(0, 0).y;
+  d.push(`M 0 ${fmt(eq)} L ${MAP_W} ${fmt(eq)}`);
+  for (const lon of [-90, 0, 90]) {
+    const x = project(0, lon).x;
+    d.push(`M ${fmt(x)} 0 L ${fmt(x)} ${MAP_H}`);
+  }
+  return d.join(' ');
+})();

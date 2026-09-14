@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { COAST_PATH_2D, GRATICULE_PATH_2D, LAND_PATH_2D } from '@/lib/vector-map';
+import { EARTH_STYLE } from '@/lib/globe-style';
+import {
+  COAST_PATH_2D,
+  GRATICULE_MAJOR_PATH_2D,
+  GRATICULE_PATH_2D,
+  LAND_PATH_2D,
+} from '@/lib/vector-map';
 import { cn } from '@/lib/utils';
 import type { OloLinkState } from '@/hooks/use-ololink';
 import {
@@ -264,7 +270,7 @@ export function MapScene({ state }: { state: OloLinkState }) {
   };
 
   return (
-    <div className="relative h-full w-full bg-[#05121f]">
+    <div className="relative h-full w-full" style={{ background: EARTH_STYLE.oceanDeep }}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${MAP_W} ${MAP_H}`}
@@ -287,6 +293,33 @@ export function MapScene({ state }: { state: OloLinkState }) {
           <clipPath id="map-clip">
             <rect x={-MAP_W} y={-MAP_H} width={MAP_W * 3} height={MAP_H * 3} />
           </clipPath>
+          {/* ocean + land gradients mirror the 3D globe's shaded shells */}
+          <linearGradient
+            id="map-ocean"
+            gradientUnits="userSpaceOnUse"
+            x1="0"
+            y1="0"
+            x2="0"
+            y2={MAP_H}
+          >
+            <stop offset="0%" stopColor={EARTH_STYLE.oceanDeep} />
+            <stop offset="28%" stopColor={EARTH_STYLE.oceanMid} />
+            <stop offset="50%" stopColor={EARTH_STYLE.oceanShallow} />
+            <stop offset="72%" stopColor={EARTH_STYLE.oceanMid} />
+            <stop offset="100%" stopColor={EARTH_STYLE.oceanDeep} />
+          </linearGradient>
+          <linearGradient
+            id="map-land"
+            gradientUnits="userSpaceOnUse"
+            x1="0"
+            y1="0"
+            x2="0"
+            y2={MAP_H}
+          >
+            <stop offset="0%" stopColor={EARTH_STYLE.landLow} />
+            <stop offset="50%" stopColor={EARTH_STYLE.landHigh} />
+            <stop offset="100%" stopColor={EARTH_STYLE.landLow} />
+          </linearGradient>
           <radialGradient id="map-vignette" cx="50%" cy="50%" r="72%">
             <stop offset="55%" stopColor="#03060d" stopOpacity="0" />
             <stop offset="100%" stopColor="#03060d" stopOpacity="0.92" />
@@ -324,26 +357,46 @@ export function MapScene({ state }: { state: OloLinkState }) {
             y={-MAP_H}
             width={MAP_W * 3}
             height={MAP_H * 3}
-            fill="#05121f"
+            fill={EARTH_STYLE.oceanDeep}
           />
+          <rect x={0} y={0} width={MAP_W} height={MAP_H} fill="url(#map-ocean)" />
           {/* vector continents — the exact same land data the 3D globe renders */}
-          <path d={LAND_PATH_2D} fillRule="evenodd" fill="#0f2f2a" fillOpacity={0.95} />
+          <path d={LAND_PATH_2D} fillRule="evenodd" fill="url(#map-land)" fillOpacity={0.88} />
+          {/* soft coast halo, then the crisp shoreline — mirrors the globe rim */}
           <path
             d={COAST_PATH_2D}
             fill="none"
-            stroke="#5eead4"
-            strokeOpacity={0.55}
+            stroke={EARTH_STYLE.coast}
+            strokeOpacity={0.14}
+            strokeWidth={2 * inv}
+            strokeLinejoin="round"
+          />
+          <path
+            d={COAST_PATH_2D}
+            fill="none"
+            stroke={EARTH_STYLE.coast}
+            strokeOpacity={0.6}
             strokeWidth={0.5 * inv}
+            strokeLinejoin="round"
           />
           {/* lat/lon grid, same 15° step as the globe graticule */}
           {layers.orbits !== undefined && (
-            <path
-              d={GRATICULE_PATH_2D}
-              fill="none"
-              stroke="#38bdf8"
-              strokeOpacity={0.1}
-              strokeWidth={0.4 * inv}
-            />
+            <>
+              <path
+                d={GRATICULE_PATH_2D}
+                fill="none"
+                stroke={EARTH_STYLE.graticule}
+                strokeOpacity={0.14}
+                strokeWidth={0.4 * inv}
+              />
+              <path
+                d={GRATICULE_MAJOR_PATH_2D}
+                fill="none"
+                stroke={EARTH_STYLE.graticuleMajor}
+                strokeOpacity={0.24}
+                strokeWidth={0.5 * inv}
+              />
+            </>
           )}
 
 
