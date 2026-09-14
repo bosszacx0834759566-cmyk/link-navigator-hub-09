@@ -1930,6 +1930,9 @@ function SceneContent({
       {/* uniform ambient lighting only — no day/night terminator, no shadows */}
       <ambientLight intensity={3.2} />
 
+      {/* a sparse, static starfield — cheap depth cue, no textures */}
+      <Stars radius={60} depth={30} count={700} factor={2.4} saturation={0} fade speed={0} />
+
       
 
       <LodDriver onChange={setLod} />
@@ -2016,7 +2019,7 @@ export function GlobeScene({ state }: { state: OloLinkState }) {
         onPointerMissed={() => state.select(null)}
         className="!absolute inset-0"
       >
-        <color attach="background" args={['#000000']} />
+        <color attach="background" args={[EARTH_STYLE.space]} />
         <LodContext.Provider value={lod}>
           <SceneContent
             state={state}

@@ -270,7 +270,7 @@ export function MapScene({ state }: { state: OloLinkState }) {
   };
 
   return (
-    <div className="relative h-full w-full bg-[#05121f]">
+    <div className="relative h-full w-full" style={{ background: EARTH_STYLE.oceanDeep }}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${MAP_W} ${MAP_H}`}
