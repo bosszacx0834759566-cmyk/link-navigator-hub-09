@@ -357,26 +357,46 @@ export function MapScene({ state }: { state: OloLinkState }) {
             y={-MAP_H}
             width={MAP_W * 3}
             height={MAP_H * 3}
-            fill="#05121f"
+            fill={EARTH_STYLE.oceanDeep}
           />
+          <rect x={0} y={0} width={MAP_W} height={MAP_H} fill="url(#map-ocean)" />
           {/* vector continents — the exact same land data the 3D globe renders */}
-          <path d={LAND_PATH_2D} fillRule="evenodd" fill="#0f2f2a" fillOpacity={0.95} />
+          <path d={LAND_PATH_2D} fillRule="evenodd" fill="url(#map-land)" />
+          {/* soft coast halo, then the crisp shoreline — mirrors the globe rim */}
           <path
             d={COAST_PATH_2D}
             fill="none"
-            stroke="#5eead4"
-            strokeOpacity={0.55}
+            stroke={EARTH_STYLE.coast}
+            strokeOpacity={0.14}
+            strokeWidth={2 * inv}
+            strokeLinejoin="round"
+          />
+          <path
+            d={COAST_PATH_2D}
+            fill="none"
+            stroke={EARTH_STYLE.coast}
+            strokeOpacity={0.6}
             strokeWidth={0.5 * inv}
+            strokeLinejoin="round"
           />
           {/* lat/lon grid, same 15° step as the globe graticule */}
           {layers.orbits !== undefined && (
-            <path
-              d={GRATICULE_PATH_2D}
-              fill="none"
-              stroke="#38bdf8"
-              strokeOpacity={0.1}
-              strokeWidth={0.4 * inv}
-            />
+            <>
+              <path
+                d={GRATICULE_PATH_2D}
+                fill="none"
+                stroke={EARTH_STYLE.graticule}
+                strokeOpacity={0.14}
+                strokeWidth={0.4 * inv}
+              />
+              <path
+                d={GRATICULE_MAJOR_PATH_2D}
+                fill="none"
+                stroke={EARTH_STYLE.graticuleMajor}
+                strokeOpacity={0.24}
+                strokeWidth={0.5 * inv}
+              />
+            </>
           )}
 
 
