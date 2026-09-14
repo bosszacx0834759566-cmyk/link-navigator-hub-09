@@ -14,7 +14,13 @@ import {
 } from 'react';
 import * as THREE from 'three';
 
-import { coastlineGeometry, graticuleGeometry, landGeometry } from '@/lib/vector-globe';
+import { EARTH_STYLE } from '@/lib/globe-style';
+import {
+  coastlineGeometry,
+  graticuleGeometry,
+  graticuleMajorGeometry,
+  landGeometry,
+} from '@/lib/vector-globe';
 
 import {
   ASSET_BY_ID,
