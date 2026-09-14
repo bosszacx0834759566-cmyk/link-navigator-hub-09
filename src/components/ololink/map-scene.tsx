@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { COAST_PATH_2D, GRATICULE_PATH_2D, LAND_PATH_2D } from '@/lib/vector-map';
+import { EARTH_STYLE } from '@/lib/globe-style';
+import {
+  COAST_PATH_2D,
+  GRATICULE_MAJOR_PATH_2D,
+  GRATICULE_PATH_2D,
+  LAND_PATH_2D,
+} from '@/lib/vector-map';
 import { cn } from '@/lib/utils';
 import type { OloLinkState } from '@/hooks/use-ololink';
 import {
