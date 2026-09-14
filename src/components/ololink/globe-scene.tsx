@@ -17,7 +17,6 @@ import * as THREE from 'three';
 import { EARTH_STYLE } from '@/lib/globe-style';
 import {
   coastlineGeometry,
-  graticuleGeometry,
   graticuleMajorGeometry,
   landGeometry,
 } from '@/lib/vector-globe';
