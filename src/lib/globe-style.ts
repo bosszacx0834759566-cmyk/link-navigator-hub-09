@@ -7,13 +7,13 @@
  */
 
 export const EARTH_STYLE = {
-  /** deep ocean at the poles -> slightly warmer ocean at the equator */
-  oceanDeep: '#061a2e',
-  oceanMid: '#0b2embed'.replace('embed', '') || '#0b2e4a',
-  oceanShallow: '#123f61',
+  /** deep ocean near the poles -> lighter ocean at the equator */
+  oceanDeep: '#04182c',
+  oceanMid: '#0a3050',
+  oceanShallow: '#10456b',
   /** subtle land greens */
-  landLow: '#173f33',
-  landHigh: '#245c46',
+  landLow: '#153b30',
+  landHigh: '#276148',
   coast: '#6fe3c4',
   graticule: '#4a86c8',
   graticuleMajor: '#7dd3fc',
