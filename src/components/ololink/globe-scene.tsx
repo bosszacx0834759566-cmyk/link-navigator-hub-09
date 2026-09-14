@@ -17,7 +17,6 @@ import * as THREE from 'three';
 import { EARTH_STYLE } from '@/lib/globe-style';
 import {
   coastlineGeometry,
-  graticuleGeometry,
   graticuleMajorGeometry,
   landGeometry,
 } from '@/lib/vector-globe';
@@ -319,7 +318,6 @@ function Earth() {
   // land shell and the ocean would z-fight through the continents
   const land = useMemo(() => landGeometry(1.004), []);
   const coast = useMemo(() => coastlineGeometry(1.007), []);
-  const grid = useMemo(() => graticuleGeometry(1.009, 15), []);
   const gridMajor = useMemo(() => graticuleMajorGeometry(1.0095), []);
 
   const oceanMat = useMemo(oceanMaterial, []);
@@ -331,14 +329,13 @@ function Earth() {
     () => () => {
       land.dispose();
       coast.dispose();
-      grid.dispose();
       gridMajor.dispose();
       oceanMat.dispose();
       landMat.dispose();
       innerHalo.dispose();
       outerHalo.dispose();
     },
-    [land, coast, grid, gridMajor, oceanMat, landMat, innerHalo, outerHalo]
+    [land, coast, gridMajor, oceanMat, landMat, innerHalo, outerHalo]
   );
 
   return (
@@ -351,20 +348,12 @@ function Earth() {
       {/* continents */}
       <mesh geometry={land} material={landMat} />
 
-      {/* graticule */}
-      <lineSegments geometry={grid}>
-        <lineBasicMaterial
-          color={EARTH_STYLE.graticule}
-          transparent
-          opacity={0.1}
-          depthWrite={false}
-        />
-      </lineSegments>
+      {/* major grid lines only — equator, prime meridian and quarter meridians */}
       <lineSegments geometry={gridMajor}>
         <lineBasicMaterial
           color={EARTH_STYLE.graticuleMajor}
           transparent
-          opacity={0.2}
+          opacity={0.22}
           depthWrite={false}
         />
       </lineSegments>

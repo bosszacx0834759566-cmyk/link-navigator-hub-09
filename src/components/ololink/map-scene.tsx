@@ -6,7 +6,6 @@ import { EARTH_STYLE } from '@/lib/globe-style';
 import {
   COAST_PATH_2D,
   GRATICULE_MAJOR_PATH_2D,
-  GRATICULE_PATH_2D,
   LAND_PATH_2D,
 } from '@/lib/vector-map';
 import { cn } from '@/lib/utils';
@@ -379,24 +378,15 @@ export function MapScene({ state }: { state: OloLinkState }) {
             strokeWidth={0.5 * inv}
             strokeLinejoin="round"
           />
-          {/* lat/lon grid, same 15° step as the globe graticule */}
+          {/* major grid lines only — equator, prime meridian and quarter meridians */}
           {layers.orbits !== undefined && (
-            <>
-              <path
-                d={GRATICULE_PATH_2D}
-                fill="none"
-                stroke={EARTH_STYLE.graticule}
-                strokeOpacity={0.14}
-                strokeWidth={0.4 * inv}
-              />
-              <path
-                d={GRATICULE_MAJOR_PATH_2D}
-                fill="none"
-                stroke={EARTH_STYLE.graticuleMajor}
-                strokeOpacity={0.24}
-                strokeWidth={0.5 * inv}
-              />
-            </>
+            <path
+              d={GRATICULE_MAJOR_PATH_2D}
+              fill="none"
+              stroke={EARTH_STYLE.graticuleMajor}
+              strokeOpacity={0.24}
+              strokeWidth={0.5 * inv}
+            />
           )}
 
 
