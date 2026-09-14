@@ -287,6 +287,33 @@ export function MapScene({ state }: { state: OloLinkState }) {
           <clipPath id="map-clip">
             <rect x={-MAP_W} y={-MAP_H} width={MAP_W * 3} height={MAP_H * 3} />
           </clipPath>
+          {/* ocean + land gradients mirror the 3D globe's shaded shells */}
+          <linearGradient
+            id="map-ocean"
+            gradientUnits="userSpaceOnUse"
+            x1="0"
+            y1="0"
+            x2="0"
+            y2={MAP_H}
+          >
+            <stop offset="0%" stopColor={EARTH_STYLE.oceanDeep} />
+            <stop offset="28%" stopColor={EARTH_STYLE.oceanMid} />
+            <stop offset="50%" stopColor={EARTH_STYLE.oceanShallow} />
+            <stop offset="72%" stopColor={EARTH_STYLE.oceanMid} />
+            <stop offset="100%" stopColor={EARTH_STYLE.oceanDeep} />
+          </linearGradient>
+          <linearGradient
+            id="map-land"
+            gradientUnits="userSpaceOnUse"
+            x1="0"
+            y1="0"
+            x2="0"
+            y2={MAP_H}
+          >
+            <stop offset="0%" stopColor={EARTH_STYLE.landLow} />
+            <stop offset="50%" stopColor={EARTH_STYLE.landHigh} />
+            <stop offset="100%" stopColor={EARTH_STYLE.landLow} />
+          </linearGradient>
           <radialGradient id="map-vignette" cx="50%" cy="50%" r="72%">
             <stop offset="55%" stopColor="#03060d" stopOpacity="0" />
             <stop offset="100%" stopColor="#03060d" stopOpacity="0.92" />
