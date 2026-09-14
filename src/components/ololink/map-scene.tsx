@@ -361,7 +361,7 @@ export function MapScene({ state }: { state: OloLinkState }) {
           />
           <rect x={0} y={0} width={MAP_W} height={MAP_H} fill="url(#map-ocean)" />
           {/* vector continents — the exact same land data the 3D globe renders */}
-          <path d={LAND_PATH_2D} fillRule="evenodd" fill="url(#map-land)" />
+          <path d={LAND_PATH_2D} fillRule="evenodd" fill="url(#map-land)" fillOpacity={0.88} />
           {/* soft coast halo, then the crisp shoreline — mirrors the globe rim */}
           <path
             d={COAST_PATH_2D}
